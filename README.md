@@ -4,8 +4,8 @@ Nginx proxy configuration for forwarding requests to the OpenClaw gateway runnin
 
 ## Files
 
-- `/home/runner/work/proxy/proxy/nginx.conf` - main nginx configuration
-- `/home/runner/work/proxy/proxy/conf.d/openclaw-gateway.conf` - proxy definition for the OpenClaw gateway
+- `nginx.conf` - main nginx configuration
+- `conf.d/openclaw-gateway.conf` - proxy definition for the OpenClaw gateway
 
 ## Behavior
 
@@ -16,11 +16,13 @@ It also forwards common proxy headers and supports HTTP/1.1 upgrade requests for
 ## Validate
 
 ```bash
-nginx -t -c /home/runner/work/proxy/proxy/nginx.conf
+cd /path/to/proxy
+nginx -p "$(pwd)/" -t -c nginx.conf
 ```
 
 ## Run
 
 ```bash
-nginx -c /home/runner/work/proxy/proxy/nginx.conf -g 'daemon off;'
+cd /path/to/proxy
+nginx -p "$(pwd)/" -c nginx.conf -g 'daemon off;'
 ```
