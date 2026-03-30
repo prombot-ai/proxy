@@ -1,12 +1,18 @@
+# TLS: create ssl/fullchain.pem and ssl/privkey.pem before first start (e.g. sh ssl/generate-selfsigned.sh).
 services:
   proxy:
     build:
       context: .
     ports:
       - "8080:8080"
+      - "443:443"
     environment:
       OPENCLAW_UPSTREAM_HOST: ${OPENCLAW_UPSTREAM_HOST:-host.docker.internal}
       OPENCLAW_UPSTREAM_PORT: ${OPENCLAW_UPSTREAM_PORT:-18789}
+    # PEM paths inside the container (defaults below). Create files on the host first.
+    volumes:
+      - ${SSL_FULLCHAIN:-./ssl/fullchain.pem}:/etc/nginx/ssl/fullchain.pem:ro
+      - ${SSL_PRIVKEY:-./ssl/privkey.pem}:/etc/nginx/ssl/privkey.pem:ro
     extra_hosts:
       - "host.docker.internal:host-gateway"
     restart: unless-stopped
