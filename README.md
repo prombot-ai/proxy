@@ -11,7 +11,7 @@ Nginx proxy configuration for forwarding requests to the OpenClaw gateway runnin
 
 The proxy listens on port `8080` and forwards all requests to `127.0.0.1:18789`.
 
-It also forwards common proxy headers and supports HTTP/1.1 upgrade requests for websocket-style connections.
+It also forwards common proxy headers and supports HTTP/1.1 upgrade requests for WebSocket connections.
 
 ## Validate
 
