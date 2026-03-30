@@ -2,28 +2,18 @@
 
 Nginx proxy configuration for forwarding requests to the OpenClaw gateway running on `http://localhost:18789`.
 
-## Files
+## TLS and self-signed certificates
 
-- `nginx.conf` - main nginx configuration
-- `conf.d/openclaw-gateway.conf` - proxy definition for the OpenClaw gateway
-- `conf.d/openclaw-gateway.conf.template` - Docker template for configuring the upstream target at container startup
-- `Dockerfile` - container image for the proxy
-- `docker-compose.yml` - Compose deployment for Ubuntu and other Docker hosts
-- `ssl/` - TLS material for HTTPS (not committed); see below
+Helper script: `ssl/generate-selfsigned.sh`. HTTPS on port 443 expects `ssl/fullchain.pem` and `ssl/privkey.pem` on the host (Compose bind-mounts them into the container). If those files are missing, create them with a real CA-issued certificate, or for **local development** use the helper script:
 
-## Behavior
+```bash
+cd /path/to/proxy
+sh ssl/generate-selfsigned.sh
+```
 
-The proxy listens on port `8080` (HTTP) and `443` (HTTPS with TLS) and forwards requests to `127.0.0.1:18789`. The OpenClaw Control UI is expected at `gateway.controlUi.basePath` (for example `/openclaw` in `openclaw.json`). Requests to `/` are redirected to `/openclaw/`; `/openclaw` and all other gateway paths are proxied as-is.
+The script runs `openssl req` to write **both** PEM files next to itself under `ssl/`. It uses `-subj "/CN=localhost"` (no SANs); browsers will show a certificate warning until you trust the cert or replace it with a hostname-valid certificate for production.
 
-HTTPS uses HTTP/2 on port 443. It also forwards common proxy headers and supports HTTP/1.1 upgrade requests for WebSocket connections.
-
-The Docker deployment publishes ports `8080` and `443`, mounts PEM files into `/etc/nginx/ssl/`, and by default forwards upstream to `host.docker.internal:18789`. In the provided Compose file, `host.docker.internal` is mapped to Docker's `host-gateway`, which makes the setup work on Ubuntu when the gateway is running on the host machine. You can override the upstream target with `OPENCLAW_UPSTREAM_HOST` and `OPENCLAW_UPSTREAM_PORT`.
-
-Override certificate paths on the host with `SSL_FULLCHAIN` and `SSL_PRIVKEY` (defaults: `./ssl/fullchain.pem` and `./ssl/privkey.pem`).
-
-Before the first `docker compose up`, create those PEM files (for example run `sh ssl/generate-selfsigned.sh` for a local self-signed pair) or point the env vars at real certificates.
-
-For OpenClaw Control UI over HTTPS, add your public origin (for example `https://your.domain`) to `gateway.controlUi.allowedOrigins` on the gateway.
+Requirements: `openssl` on your `PATH`. Run the script once before `nginx -t` or `docker compose up` when the default PEM paths are empty.
 
 ## Validate
 
@@ -36,7 +26,7 @@ nginx -p "$(pwd)/" -t -c nginx.conf
 
 ## Run
 
-Place `fullchain.pem` and `privkey.pem` under `ssl/` (or adjust `ssl_certificate` paths in `conf.d/openclaw-gateway.conf`). Paths are relative to the nginx `-p` prefix (the project directory).
+Place `fullchain.pem` and `privkey.pem` under `ssl/` (see [TLS and self-signed certificates](#tls-and-self-signed-certificates), or adjust `ssl_certificate` paths in `conf.d/openclaw-gateway.conf`). Paths are relative to the nginx `-p` prefix (the project directory).
 
 ```bash
 cd /path/to/proxy
@@ -47,7 +37,7 @@ Binding port 443 may require elevated privileges on Linux.
 
 ## Run with Docker Compose
 
-Create TLS files on the host first (for example `sh ssl/generate-selfsigned.sh`), then:
+Create TLS files on the host first (see [TLS and self-signed certificates](#tls-and-self-signed-certificates)), then:
 
 ```bash
 cd /path/to/proxy
