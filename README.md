@@ -1,6 +1,27 @@
 # proxy
 
-Nginx proxy configuration for forwarding requests to the OpenClaw gateway running on `http://localhost:18789`.
+Nginx reverse proxy for the OpenClaw **Control UI** only: requests under `/openclaw` are forwarded to the gateway (`gateway.controlUi.basePath` in `openclaw.json`). Any other path returns **404** (use a different listener or direct port `18789` for HTTP API / chat endpoints).
+
+`GET /` without an `Upgrade` header redirects to `/openclaw/`.
+
+### Control UI WebSocket URL
+
+In the Control UI settings, set **WebSocket URL** to **`wss://<your-host>/openclaw`** (same path as `basePath`, over HTTPS on port 443). Example: `wss://promai.work/openclaw`. That matches what nginx proxies and avoids handshake issues. Newer OpenClaw builds also default the WebSocket URL from `basePath` ([openclaw#30228](https://github.com/openclaw/openclaw/pull/30228)).
+
+The proxy **does not override** `Origin`; include **`https://<your-host>`** in `gateway.controlUi.allowedOrigins`.
+
+**Fallback:** `wss://<host>/` (root path) is proxied via `@openclaw_ws_root` for older clients that omit `basePath` in the WebSocket URL. Prefer **`wss://<host>/openclaw`** when configuring manually.
+
+### Device pairing (“pairing required”)
+
+The Control UI treats new browsers as **devices** that must be approved once on the **machine where the OpenClaw gateway runs** (not on the nginx host unless it is the same machine).
+
+1. On the gateway host, run **`openclaw devices list`** and note pending requests.
+2. Approve with **`openclaw devices approve <requestId>`** (use the id from the list).
+
+**Phone or another PC:** On the gateway, run **`openclaw dashboard --no-open`**, copy the full URL it prints (including **`#token=...`**), open that URL on the device so the UI can authenticate without going through the pairing queue first.
+
+After approval, reload the Control UI at **`https://<your-host>/openclaw/`** if it still shows the pairing screen.
 
 ## TLS and self-signed certificates
 
